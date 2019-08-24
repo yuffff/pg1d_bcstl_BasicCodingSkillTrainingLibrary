@@ -2,7 +2,180 @@
 #include<iostream>
 #include<queue>
 #include<stack>
-const int MAX_GRAPH_NODES=100;
+#include<cstring>
+#include<string>
+/*
+    using tree:
+    xxx
+*/
+// navigate and maniplixx at last step 
+struct Trunk
+{
+    Trunk *prev;
+    std::string str;
+    Trunk(Trunk *prev, std::string str)
+    {
+        this->prev = prev;
+        this->str = str;
+    }
+};
+class TreeNode{
+    int v;
+    TreeNode* left;
+    TreeNode* right;
+public:
+    TreeNode(int value){
+        v=value;
+        left=right=NULL;
+    }
+    void setLeftNode(TreeNode* l){
+        left=l;
+    }
+    void setRightNode(TreeNode* r){
+        right=r;
+    }
+    TreeNode* getLeftNode(){
+        return left;
+    }
+    TreeNode* getRightNode(){
+        return right;
+    }
+    int getValue(){
+        return v;
+    }
+};
+class Tree{
+    TreeNode* root;
+    public:
+        void buildTreeFromString(char* ss); 
+        void showTrunks(Trunk *p);
+        void printTree(TreeNode* TreeNode,Trunk *prev, bool isLeft);
+        void firstOrderVisit(TreeNode* TreeNode);
+        void inOrderVisit(TreeNode* TreeNode);
+        void static_standerd_test(){
+            char* sstr = (char*)"(324,)(22,L) (3,R) (4,LL)(281,LLL)(5,LR)()"; 
+                //-> warning-free - cast to char* var.
+            buildTreeFromString(sstr);
+            printTree(root,NULL,false);
+            std::cout<<"\n";
+            std::cout<<"First Order Visit: \t";firstOrderVisit(root);
+            std::cout<<"\nIn Order Visit: \t";inOrderVisit(root);
+            std::cout<<"\n";
+        }
+};
+void Tree::buildTreeFromString(char* ss){
+    //evaluate the expression, between ( and ,
+    char* sp = std::strchr(ss,'(')+1;
+    char* ep = std::strchr(sp,',');
+    while(sp!=NULL&& ep!=NULL){
+        int n=ep-sp;
+        int value=0;
+        for(int i=0;i<n;i++){
+            int factor=1;
+            for(int j=n-1-i;j>0;j--){
+                factor *= 10;
+            }
+            value += (*(sp+i)-'0')*factor;
+        }
+        //std::cout<<value<<std::endl;
+        //extract the lev information 
+        sp = ep+1;//, 
+        ep = std::strchr(sp,')');
+        n=ep-sp;
+        //std::cout<<n;
+        TreeNode* curNode;
+        TreeNode* curParent;
+        curParent=root;
+
+        //navigate to :
+        for(int i=0;i<n-1;i++){
+            if(*(sp+i)=='L'){
+                //printf("left");
+                curParent=curParent->getLeftNode();
+            }else if(*(sp+i)=='R'){
+                //right
+                curParent=curParent->getRightNode();
+            }
+        }
+        // add TreeNode
+        if(0==n){
+            //root 
+            root=new TreeNode(value);
+        }else{
+            curNode = new TreeNode(value);
+            if(*(sp+n-1)=='L'){ 
+                curParent->setLeftNode(curNode);
+            }else{
+                curParent->setRightNode(curNode);
+            }
+        }
+
+        sp = std::strchr(sp,'(')+1; 
+        ep = std::strchr(sp,',');
+    }
+}
+// Helper function to print branches of the binary tree
+void Tree::showTrunks(Trunk *p)
+{
+    if (p == NULL)
+        return;
+
+    showTrunks(p->prev);
+
+    std::cout << p->str;
+}
+// Recursive function to print binary tree
+// It uses inorder traversal
+void Tree::printTree(TreeNode* TreeNode,Trunk *prev, bool isLeft)
+{
+    if (TreeNode == NULL)
+        return;
+    
+    std::string prev_str = "    ";
+    Trunk *trunk = new Trunk(prev, prev_str);
+
+    printTree(TreeNode->getRightNode(), trunk, true);
+
+    if (!prev)
+        trunk->str = "---";
+    else if (isLeft)
+    {
+        trunk->str = ".---";
+        prev_str = "   |";
+    }
+    else
+    {
+        trunk->str = "`---";
+        prev->str = prev_str;
+    }
+
+    showTrunks(trunk);
+    std::cout << TreeNode->getValue() << std::endl;
+
+    if (prev)
+        prev->str = prev_str;
+    trunk->str = "   |";
+
+    printTree(TreeNode->getLeftNode(), trunk, false);
+}
+//some operations to the tree 
+void Tree::firstOrderVisit(TreeNode* TreeNode){
+    if(TreeNode==NULL){
+        return;
+    }
+    std::cout<<TreeNode->getValue()<<" ";
+    firstOrderVisit(TreeNode->getLeftNode());
+    firstOrderVisit(TreeNode->getRightNode());
+}
+void Tree::inOrderVisit(TreeNode* TreeNode){
+    if(TreeNode==NULL){
+        return;
+    }
+    inOrderVisit(TreeNode->getLeftNode());
+    std::cout<<TreeNode->getValue()<<" ";
+    inOrderVisit(TreeNode->getRightNode());
+}
+
 
 
 /* using Graph
@@ -26,6 +199,7 @@ https://www.jianshu.com/p/11e3db610c4b
 --> 0,1,1,0,2,2,1,2,4,2,0,3,2,3,6,3,3,2
 
 */
+const int MAX_GRAPH_NODES=100;
 class Edge{
     public:
         int val;
@@ -59,21 +233,17 @@ class Graph{
         void bfs(int begin_vexid);
         void static_standerd_test(){
             int arr[]={0,1,1,0,2,2,1,2,4,2,0,3,2,3,6,3,3,2};
-            Graph* g=new Graph();
-            g->build_graph_from_array(arr,sizeof(arr)/sizeof(arr[0]));
-            g->showListedGraph();
-            g->bfs(2);
-            g->dfs(2);
+            build_graph_from_array(arr,sizeof(arr)/sizeof(arr[0]));
+            showListedGraph();
+            bfs(2);
+            dfs(2);
         }
-
 };
-
 void Graph::build_graph_from_array(int* array,int size){
     for(int i=0;i<size;i+=3){
         this->addNodeAtTail(array[i],new Edge(array[i+2],array[i+1]));
     }
 }
-
 void Graph::showListedGraph(){
     for(int i=0;i<10;i++){// as an example, just show 10 lines 
         Edge* tmpEdge = this->edgeList[i];
@@ -88,7 +258,6 @@ void Graph::showListedGraph(){
         }
     }
 }
-
 //operations to graph
 /*
     push the beginning item to queue
@@ -105,7 +274,6 @@ void Graph::bfs(int begin_vexid){
     bool* visited=new bool[MAX_GRAPH_NODES];
     for(int i=0;i<MAX_GRAPH_NODES;i++)
         visited[i]=false;
-    
     std::queue<int> q;
     q.push(begin_vexid);
     //visited[begin_vexid]=true;
@@ -132,7 +300,6 @@ void Graph::dfs(int begin_vexid){
     bool* visited=new bool[MAX_GRAPH_NODES];
     for(int i=0;i<MAX_GRAPH_NODES;i++)
         visited[i]=false;
-    
     std::stack<int> s;
     s.push(begin_vexid);
     //visited[begin_vexid]=true;
@@ -172,6 +339,5 @@ void Graph::dfs(int begin_vexid){
             helperstack.pop();
             s.push(helperval);
         }
-        
     }std::cout<<"\n";
 }
