@@ -19,7 +19,7 @@ struct Trunk
         this->str = str;
     }
 };
-class TreeNode{
+class TreeNode{  
     int v;
     TreeNode* left;
     TreeNode* right;
