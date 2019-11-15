@@ -63,6 +63,7 @@ class Tree{
             std::cout<<"\n";
         }
 };
+
 void Tree::buildTreeFromString(char* ss){
     //evaluate the expression, between ( and ,
     char* sp = std::strchr(ss,'(')+1;
